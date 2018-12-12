@@ -18,3 +18,13 @@ C:\Users\noegi\Documents\Visual Studio 2017\Projects\TilemapEditorVienneGigi\Til
 C:\Users\noegi\Documents\Visual Studio 2017\Projects\TilemapEditorVienneGigi\TilemapEditorVienneGigi\obj\Debug\TilemapEditorVienneGigi.csproj.CoreCompileInputs.cache
 C:\Users\noegi\Documents\Visual Studio 2017\Projects\TilemapEditorVienneGigi\TilemapEditorVienneGigi\obj\Debug\WindowsFormsApp1.exe
 C:\Users\noegi\Documents\Visual Studio 2017\Projects\TilemapEditorVienneGigi\TilemapEditorVienneGigi\obj\Debug\WindowsFormsApp1.pdb
+D:\Users\noegi\Documents\GitHub\TilemapEditorVienneGigi\TilemapEditorVienneGigi\bin\Debug\WindowsFormsApp1.exe.config
+D:\Users\noegi\Documents\GitHub\TilemapEditorVienneGigi\TilemapEditorVienneGigi\bin\Debug\WindowsFormsApp1.exe
+D:\Users\noegi\Documents\GitHub\TilemapEditorVienneGigi\TilemapEditorVienneGigi\bin\Debug\WindowsFormsApp1.pdb
+D:\Users\noegi\Documents\GitHub\TilemapEditorVienneGigi\TilemapEditorVienneGigi\obj\Debug\TilemapEditorVienneGigi.csprojAssemblyReference.cache
+D:\Users\noegi\Documents\GitHub\TilemapEditorVienneGigi\TilemapEditorVienneGigi\obj\Debug\WindowsFormsApp1.Form1.resources
+D:\Users\noegi\Documents\GitHub\TilemapEditorVienneGigi\TilemapEditorVienneGigi\obj\Debug\WindowsFormsApp1.Properties.Resources.resources
+D:\Users\noegi\Documents\GitHub\TilemapEditorVienneGigi\TilemapEditorVienneGigi\obj\Debug\TilemapEditorVienneGigi.csproj.GenerateResource.cache
+D:\Users\noegi\Documents\GitHub\TilemapEditorVienneGigi\TilemapEditorVienneGigi\obj\Debug\TilemapEditorVienneGigi.csproj.CoreCompileInputs.cache
+D:\Users\noegi\Documents\GitHub\TilemapEditorVienneGigi\TilemapEditorVienneGigi\obj\Debug\WindowsFormsApp1.exe
+D:\Users\noegi\Documents\GitHub\TilemapEditorVienneGigi\TilemapEditorVienneGigi\obj\Debug\WindowsFormsApp1.pdb

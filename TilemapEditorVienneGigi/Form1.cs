@@ -69,7 +69,7 @@ namespace WindowsFormsApp1
             for(int x = 0; x <map.width; x++) {
                 for(int y = 0; y < map.height; y++)
                 {
-                    if (map.GetTile(x, y)!=-1)
+                    if (map.GetTile(x, y)>-1)
                     {
                         g.DrawImage(tileMap.imageSource,
                             x * tileMap.tileWidth,
