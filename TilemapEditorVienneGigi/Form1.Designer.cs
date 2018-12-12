@@ -252,7 +252,7 @@
             // 
             this.PanelProperties.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.PanelProperties.Controls.Add(this.TileMapProperties);
-            this.PanelProperties.Location = new System.Drawing.Point(319, 99);
+            this.PanelProperties.Location = new System.Drawing.Point(313, 116);
             this.PanelProperties.Name = "PanelProperties";
             this.PanelProperties.Size = new System.Drawing.Size(213, 230);
             this.PanelProperties.TabIndex = 14;
