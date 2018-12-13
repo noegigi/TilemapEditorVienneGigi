@@ -21,6 +21,14 @@ namespace WindowsFormsApp1
 
         int currentRow, currentColumn;
 
+        int currentTile;
+
+        int currentMapRow, currentMapColumn;
+
+        bool isMouseDown = false;
+
+        bool isErasing = false;
+
         public Form1()
         {
             InitializeComponent();
@@ -40,8 +48,10 @@ namespace WindowsFormsApp1
 
         private void DisplayTilemap()
         {
-            Graphics graphics = TileCanvas.CreateGraphics();
-            graphics.Clear(Color.White);
+            Graphics g = TileCanvas.CreateGraphics();
+            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+            g.Clear(Color.White);
             Image img = tileMap.imageSource;
             int cpt = 0;
             for (int x = 0; x < columnCount; x++)
@@ -50,7 +60,7 @@ namespace WindowsFormsApp1
                 {
                     if (cpt < tileMap.tileCount)
                     {
-                        graphics.DrawImage(img,
+                        g.DrawImage(img,
                             x * (tileMap.tileWidth + 1),
                             y * (tileMap.tileHeight + 1),
                             tileMap.GetTile(cpt).GetImagePosition(),
@@ -65,6 +75,8 @@ namespace WindowsFormsApp1
         private void DisplayMap()
         {
             Graphics g = MapCanvas.CreateGraphics();
+            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
             g.Clear(Color.White);
             for(int x = 0; x <map.width; x++) {
                 for(int y = 0; y < map.height; y++)
@@ -95,12 +107,103 @@ namespace WindowsFormsApp1
 
         private void Save_Click(object sender, EventArgs e)
         {
-            XMLHandler.SaveMapAsTML(tileMap);
+            if (tileMap != null)
+            {
+                XMLHandler.SaveMapAsTML(tileMap, map);
+            }
         }
 
         private void LoadMap_Click(object sender, EventArgs e)
         {
             //XmlDocument doc = XMLHandler.LoadMapFromTML();
+        }
+
+        private void TileCanvas_Click(object sender, EventArgs e)
+        {
+            if (tileMap != null)
+            {
+                MouseEventArgs me = (MouseEventArgs)e;
+                currentColumn = (me.X / (tileMap.tileWidth + 1));
+                currentRow = (me.Y / (tileMap.tileHeight + 1));
+                currentTile = tileMap.GetTileIndexFromXY(currentColumn, currentRow);
+            }
+        }
+
+        private void MapCanvas_Click(object sender, EventArgs e)
+        {
+            if (tileMap != null&&currentTile!=-1)
+            {
+                MouseEventArgs me = (MouseEventArgs)e;
+                int x = me.X / (tileMap.tileWidth);
+                int y = me.Y / (tileMap.tileHeight);
+                if (!isErasing)
+                {
+                    map.AddTile(currentTile, x, y);
+                    DisplayMap();
+                }
+                else
+                {
+                    map.AddTile(-1, x, y);
+                    DisplayMap();
+                }
+                    
+            }
+        }
+
+        private void MapCanvas_MouseDown(object sender, MouseEventArgs e)
+        {
+            isMouseDown = true;
+        }
+
+        private void Form1_MouseUp(object sender, MouseEventArgs e)
+        {
+            isMouseDown = false;
+        }
+
+        private void MapCanvas_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (isMouseDown)
+            {
+                if (tileMap != null && currentTile != -1)
+                {
+                    int previousMapColumn = currentMapColumn;
+                    int previousMapRow = currentMapRow;
+                    currentMapColumn = e.X / (tileMap.tileWidth);
+                    currentMapRow = e.Y / (tileMap.tileHeight);
+                    if (previousMapColumn != currentMapColumn || previousMapRow != currentMapRow)
+                    {
+                        if (!isErasing)
+                        {
+                            map.AddTile(currentTile, currentMapColumn, currentMapRow);
+                            DisplayMap();
+                        }
+                        else
+                        {
+                            map.AddTile(-1, currentMapColumn, currentMapRow);
+                            DisplayMap();
+                        }
+                    }
+                }
+            }
+        }
+
+        private void Erase_Click(object sender, EventArgs e)
+        {
+            if (isErasing)
+            {
+                isErasing = false;
+                Erase.Text = "Effacer";
+            }
+            else
+            {
+                isErasing = true;
+                Erase.Text = "Dessiner";
+            }
+        }
+
+        private void MapCanvas_MouseUp(object sender, MouseEventArgs e)
+        {
+            isMouseDown = false;
         }
 
         private void ValidateTileMapProp_Click(object sender, EventArgs e)
@@ -152,33 +255,74 @@ namespace WindowsFormsApp1
                 XmlTextWriter textWriter = new XmlTextWriter(saveFile.FileName,Encoding.UTF8);
                 textWriter.WriteStartDocument();
 
-                textWriter.WriteStartElement(TileMapElement.Name);
+                textWriter.WriteStartElement("SaveFile");
+                    SaveTilemap(ref textWriter, tileMap);
 
-                    textWriter.WriteStartElement(TileMapElement.Source);
-                    textWriter.WriteString(tileMap.source);
-                    textWriter.WriteEndElement();
-
-                    textWriter.WriteStartElement(TileMapElement.MarginWidth);
-                    textWriter.WriteValue(tileMap.marginWidth);
-                    textWriter.WriteEndElement();
-
-                    textWriter.WriteStartElement(TileMapElement.MarginHeight);
-                    textWriter.WriteValue(tileMap.marginHeight);
-                    textWriter.WriteEndElement();
-
-                    textWriter.WriteStartElement(TileMapElement.TileWidth);
-                    textWriter.WriteValue(tileMap.tileWidth);
-                    textWriter.WriteEndElement();
-
-                    textWriter.WriteStartElement(TileMapElement.TileHeight);
-                    textWriter.WriteValue(tileMap.tileHeight);
-                    textWriter.WriteEndElement();
-
+                    SaveMap(ref textWriter, map);
                 textWriter.WriteEndElement();
 
                 textWriter.WriteEndDocument();
                 textWriter.Close();
             }
+        }
+
+        static void SaveTilemap(ref XmlTextWriter textWriter, TileMap tileMap)
+        {
+            textWriter.WriteStartElement(TileMapElement.Name);
+
+                textWriter.WriteElementString(TileMapElement.Source,tileMap.source);
+
+                textWriter.WriteElementString(TileMapElement.MarginWidth,tileMap.marginWidth.ToString());
+
+                textWriter.WriteElementString(TileMapElement.MarginHeight, tileMap.marginHeight.ToString());
+
+                textWriter.WriteElementString(TileMapElement.TileWidth, tileMap.tileWidth.ToString());
+
+                textWriter.WriteElementString(TileMapElement.TileHeight, tileMap.tileHeight.ToString());
+
+            textWriter.WriteEndElement();
+        }
+
+        static void SaveMap(ref XmlTextWriter w,Map m)
+        {
+            w.WriteStartElement(MapElement.Name);
+                w.WriteElementString(MapElement.Width, m.width.ToString());
+
+                w.WriteElementString(MapElement.Height, m.height.ToString());
+
+                foreach (Layer l in m.layers)
+                {
+                    SaveLayer(ref w,l);
+                }
+
+            w.WriteEndElement();
+        }
+
+        static void SaveLayer(ref XmlTextWriter w,Layer l)
+        {
+            w.WriteStartElement(LayerElement.Tiles);
+            for(int x = 0; x < l.tiles.GetLength(0); x++)
+            {
+                w.WriteStartElement(LayerElement.Column);
+                for(int y = 0; y < l.tiles.GetLength(1); y++)
+                {
+                    w.WriteElementString(LayerElement.Row, l.tiles[x,y].ToString());
+                }
+                w.WriteEndElement();
+            }
+            w.WriteEndElement();
+
+            w.WriteStartElement(LayerElement.Collision);
+            for (int x = 0; x < l.collision.GetLength(0); x++)
+            {
+                w.WriteStartElement(LayerElement.Column);
+                for (int y = 0; y < l.collision.GetLength(1); y++)
+                {
+                    w.WriteElementString(LayerElement.Row, l.collision[x, y].ToString());
+                }
+                w.WriteEndElement();
+            }
+            w.WriteEndElement();
         }
 
         public static XmlDocument LoadMapFromTML()
@@ -206,9 +350,26 @@ namespace WindowsFormsApp1
         public static string MarginHeight = "MarginHeight";
     }
 
+    static class MapElement
+    {
+        public static string Name = "Map";
+        public static string Width = "Width";
+        public static string Height = "Height";
+        public static string Layers = "Layers";
+    }
+
+    static class LayerElement
+    {
+        public static string Name = "Layer";
+        public static string Tiles = "Tiles";
+        public static string Collision = "Collision";
+        public static string Column = "C";
+        public static string Row = "R";
+    }
+
     class Map
     {
-        List<Layer> layers;
+        public List<Layer> layers;
         int activeLayer = 0;
         public int width, height;
 
@@ -248,9 +409,8 @@ namespace WindowsFormsApp1
 
     class Layer
     {
-        int[,] tiles;
-        bool[,] collision;
-        string name;
+        public int[,] tiles;
+        public bool[,] collision;
 
         public Layer(int width,int height)
         {
@@ -273,7 +433,8 @@ namespace WindowsFormsApp1
 
         public void AddTile(int x,int y,int tileIndex)
         {
-            tiles[x, y] = tileIndex;
+            if(x>=0&&x<tiles.GetLength(0)&&y>=0&&y<tiles.GetLength(1))
+                tiles[x, y] = tileIndex;
         }
     }
 

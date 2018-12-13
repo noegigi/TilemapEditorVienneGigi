@@ -67,6 +67,7 @@
             this.TileCanvas.SizeMode = System.Windows.Forms.PictureBoxSizeMode.AutoSize;
             this.TileCanvas.TabIndex = 0;
             this.TileCanvas.TabStop = false;
+            this.TileCanvas.Click += new System.EventHandler(this.TileCanvas_Click);
             this.TileCanvas.MouseMove += new System.Windows.Forms.MouseEventHandler(this.TileCanvas_MouseMove);
             // 
             // MapCanvas
@@ -77,6 +78,10 @@
             this.MapCanvas.Size = new System.Drawing.Size(608, 396);
             this.MapCanvas.TabIndex = 1;
             this.MapCanvas.TabStop = false;
+            this.MapCanvas.Click += new System.EventHandler(this.MapCanvas_Click);
+            this.MapCanvas.MouseDown += new System.Windows.Forms.MouseEventHandler(this.MapCanvas_MouseDown);
+            this.MapCanvas.MouseMove += new System.Windows.Forms.MouseEventHandler(this.MapCanvas_MouseMove);
+            this.MapCanvas.MouseUp += new System.Windows.Forms.MouseEventHandler(this.MapCanvas_MouseUp);
             // 
             // LoadTileMap
             // 
@@ -106,6 +111,7 @@
             this.Erase.TabIndex = 4;
             this.Erase.Text = "Effacer";
             this.Erase.UseVisualStyleBackColor = true;
+            this.Erase.Click += new System.EventHandler(this.Erase_Click);
             // 
             // Cancel
             // 
@@ -283,6 +289,7 @@
             this.Controls.Add(this.MapCanvas);
             this.Name = "Form1";
             this.Text = "TileMap Editor";
+            this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Form1_MouseUp);
             ((System.ComponentModel.ISupportInitialize)(this.TileCanvas)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.MapCanvas)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.TileWidth)).EndInit();
