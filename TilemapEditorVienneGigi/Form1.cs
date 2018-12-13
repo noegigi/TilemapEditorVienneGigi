@@ -13,22 +13,29 @@ namespace WindowsFormsApp1
 {
     public partial class Form1 : Form
     {
+        //Tilemap courante
         TileMap tileMap;
 
+        //Map courante
         Map map;
 
+        //Nombre de colonne et de lignes dans la tilemap courante
         int columnCount, rowCount;
 
+        //Tile sur laquelle est la souris sur la tilemap
         int currentRow, currentColumn;
 
+        //Tile actuellement selectionnee
         int currentTile;
 
+        //Tile actuelle sur laquelle se trouve la souris dans la map
         int currentMapRow, currentMapColumn;
 
         bool isMouseDown = false;
 
         bool isErasing = false;
 
+        //Contexte graphique des deux affichage de tilemap
         Graphics mapG, tileG;
 
         public Form1()
@@ -39,11 +46,13 @@ namespace WindowsFormsApp1
         //Permet de selectionner une image dans les fichiers qui va servir de tilemap
         private void LoadTileMap_Click(object sender, EventArgs e)
         {
+            //Ouvre l'explorateur de fichiers
             OpenFileDialog fileDialog = new OpenFileDialog();
             fileDialog.InitialDirectory = "c:\\";
             fileDialog.Filter = "Images (*.png *.jpg)|*.png;*.jpg";
             if (fileDialog.ShowDialog() == DialogResult.OK)
             {
+                map = null;
                 tileMap = new TileMap(fileDialog.FileName);
                 DisplayTileMapProperties();
             }
@@ -61,6 +70,7 @@ namespace WindowsFormsApp1
                 {
                     if (cpt < tileMap.tileCount)
                     {
+                        //Affiche chaque tile contenue dans la tilemap
                         tileG.DrawImage(img,
                             x * (tileMap.tileWidth + 1),
                             y * (tileMap.tileHeight + 1),
@@ -82,6 +92,7 @@ namespace WindowsFormsApp1
                 {
                     if (map.GetTile(x, y)>-1)
                     {
+                        //Dessine chaque tile dans la map
                         mapG.DrawImage(tileMap.imageSource,
                             x * tileMap.tileWidth,
                             y * tileMap.tileHeight,
@@ -117,8 +128,10 @@ namespace WindowsFormsApp1
         {
             TileMap t = tileMap;
             Map m = map;
+            //Ouvre l'explorateur de fichier pour sauvegarder
             if(XMLHandler.LoadMapFromTML(out tileMap,out map))
             {
+                //Initialise les canvas pour afficher les tiles
                 columnCount = tileMap.tileCountX;
                 rowCount = tileMap.tileCountY;
                 TileCanvas.Width = columnCount * (tileMap.tileWidth + 1) + 1;
@@ -132,20 +145,23 @@ namespace WindowsFormsApp1
             }
         }
 
+        //Enregistre l'index de la tile selectionnee par l'utilisateur
         private void TileCanvas_Click(object sender, EventArgs e)
         {
             if (tileMap != null)
             {
                 MouseEventArgs me = (MouseEventArgs)e;
+                //convertis la position de la souris en position dans la tilemap
                 currentColumn = (me.X / (tileMap.tileWidth + 1));
                 currentRow = (me.Y / (tileMap.tileHeight + 1));
                 currentTile = tileMap.GetTileIndexFromXY(currentColumn, currentRow);
             }
         }
 
+        //Insere l'index de la tile courante dans la map, a l'endroit selectionne par l'utilisateur
         private void MapCanvas_Click(object sender, EventArgs e)
         {
-            if (tileMap != null&&currentTile!=-1)
+            if (map!=null&&tileMap != null&&currentTile!=-1)
             {
                 MouseEventArgs me = (MouseEventArgs)e;
                 int x = me.X / (tileMap.tileWidth);
@@ -157,6 +173,7 @@ namespace WindowsFormsApp1
                 }
                 else
                 {
+                    //-1 est la valeur nulle pour les tiles
                     map.AddTile(-1, x, y);
                     DisplayMap();
                 }   
@@ -166,8 +183,9 @@ namespace WindowsFormsApp1
         private void MapCanvas_MouseDown(object sender, MouseEventArgs me)
         {
             isMouseDown = true;
-            if (tileMap != null && currentTile != -1)
+            if (map!=null && tileMap != null && currentTile != -1)
             {
+                //insere une tile dans la map
                 int x = me.X / (tileMap.tileWidth);
                 int y = me.Y / (tileMap.tileHeight);
                 if (!isErasing)
@@ -188,6 +206,7 @@ namespace WindowsFormsApp1
             isMouseDown = false;
         }
 
+        //Si le clic de la souris est appuye, dessine des tiles la ou l'utilisateur passe sa souris
         private void MapCanvas_MouseMove(object sender, MouseEventArgs e)
         {
             if (map!=null&&tileMap != null && currentTile != -1)
@@ -196,6 +215,7 @@ namespace WindowsFormsApp1
                 int previousMapRow = currentMapRow;
                 currentMapColumn = e.X / (tileMap.tileWidth);
                 currentMapRow = e.Y / (tileMap.tileHeight);
+                //Verifie si l'utilisateur a changé de position dans la map
                 if (previousMapColumn != currentMapColumn || previousMapRow != currentMapRow)
                 {
                     if (isMouseDown)
@@ -226,6 +246,7 @@ namespace WindowsFormsApp1
             }
         }
 
+        //Initialise les modes de rendus des canvas
         private void Form1_Load(object sender, EventArgs e)
         {
             mapG = MapCanvas.CreateGraphics();
@@ -237,6 +258,7 @@ namespace WindowsFormsApp1
             tileG.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
         }
 
+        //Bascule entre le mode effacer ou dessiner
         private void Erase_Click(object sender, EventArgs e)
         {
             if (isErasing)
@@ -260,13 +282,14 @@ namespace WindowsFormsApp1
         private void ValidateTileMapProp_Click(object sender, EventArgs e)
         {
             PanelProperties.Visible = false;
-            PanelProperties.Left = 797;
             PanelProperties.SendToBack();
+            //Coupe l'image chargee en tilemap
             tileMap.Cut((int)TileWidth.Value, (int)TileHeight.Value, (int)MarginWidth.Value,(int)MarginHeight.Value);
             columnCount = tileMap.tileCountX;
             rowCount = tileMap.tileCountY;
             TileCanvas.Width = columnCount * (tileMap.tileWidth + 1) + 1;
             TileCanvas.Height = rowCount * (tileMap.tileHeight + 1) + 1;
+            //initialise la map, en lui donnant une taille maximum
             map = new Map(MapCanvas.Width/tileMap.tileWidth,MapCanvas.Height/tileMap.tileHeight);
             DisplayTilemap();
             DisplayMap();
@@ -275,7 +298,7 @@ namespace WindowsFormsApp1
         //récupère la position x et y de la souris + dessine un contour du carré où se trouve la souris
         private void TileCanvas_MouseMove(object sender, MouseEventArgs e)
         {
-            if (tileMap != null)
+            if (tileMap != null&&map!=null)
             {
                 int previousColumn = currentColumn;
                 int previousRow = currentRow;
@@ -292,11 +315,13 @@ namespace WindowsFormsApp1
         }
     }
 
+    //Objet servant a charger et sauvegarder les map via un fichier .tml
     static class XMLHandler
     {
         //Enregistre une map en .tml
         public static void SaveMapAsTML(TileMap tileMap = null, Map map=null)
         {
+            //Ouvre l'explorateur de fichiers
             SaveFileDialog saveFile = new SaveFileDialog();
             saveFile.Filter = "Map file (*.tml)|*.tml";
             saveFile.Title = "Save the map";
@@ -304,6 +329,7 @@ namespace WindowsFormsApp1
 
             if (saveFile.FileName != "")
             {
+                //Cree un document .tml et enregistre les valeurs de la map et de la tilemap qui la compose dedans
                 XmlTextWriter textWriter = new XmlTextWriter(saveFile.FileName,Encoding.UTF8);
                 textWriter.WriteStartDocument();
 
@@ -318,6 +344,7 @@ namespace WindowsFormsApp1
             }
         }
 
+        //Enregistre les proprietes de la tilemap
         static void SaveTilemap(ref XmlTextWriter textWriter, TileMap tileMap)
         {
             textWriter.WriteStartElement(TileMapElement.Name);
@@ -335,6 +362,7 @@ namespace WindowsFormsApp1
             textWriter.WriteEndElement();
         }
 
+        //Enregistre les proprietes de la map
         static void SaveMap(ref XmlTextWriter w,Map m)
         {
             w.WriteStartElement(MapElement.Name);
@@ -350,6 +378,7 @@ namespace WindowsFormsApp1
             w.WriteEndElement();
         }
 
+        //Enregistre les proprietes d'un layer de la map, ainsi que les tiles qui a compose
         static void SaveLayer(ref XmlTextWriter w,Layer l)
         {
             w.WriteStartElement(LayerElement.Name);
@@ -379,6 +408,7 @@ namespace WindowsFormsApp1
             w.WriteEndElement();
         }
 
+        //Charge un fichier .tml et recree la tilemap et la map a partir de celui-ci
         public static bool LoadMapFromTML(out TileMap t,out Map m)
         {
             //Charge une map en .tml
@@ -390,8 +420,10 @@ namespace WindowsFormsApp1
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.Load(fileDialog.FileName);
                 XmlNode root = xmlDoc.SelectSingleNode("root");
+                //Cree la tilemap contenue dans le fichier .tml
                 XmlNode tileMapNode = root.SelectSingleNode(TileMapElement.Name);
                 t = LoadTilemap(tileMapNode);
+                //Cree la map contenue dans le fichier .tml associee a la tilemap
                 XmlNode mapNode = root.SelectSingleNode(MapElement.Name);
                 m = LoadMap(mapNode);
                 return true;
@@ -404,6 +436,7 @@ namespace WindowsFormsApp1
             }
         }
 
+        //Cree une tilemap a partir du fichier .tml
         static TileMap LoadTilemap(XmlNode node)
         {
             string source = node.SelectSingleNode(TileMapElement.Source).InnerText;
@@ -416,6 +449,7 @@ namespace WindowsFormsApp1
             return t;
         }
 
+        //cree une Map a partir du fichier .tml
         static Map LoadMap(XmlNode node)
         {
             int width = int.Parse(node.SelectSingleNode(MapElement.Width).InnerText);
@@ -434,6 +468,7 @@ namespace WindowsFormsApp1
             return m;
         }
 
+        //cree un layer a partir du fichier .tml
         static Layer LoadLayer(XmlNode node,int w,int h)
         {
             Layer l = new Layer(w,h);
@@ -470,6 +505,7 @@ namespace WindowsFormsApp1
         }
     }
 
+    //Contrat contenant les noms des balises des tilemap
     static class TileMapElement
     {
         public static string Name = "TileMap";
@@ -480,6 +516,7 @@ namespace WindowsFormsApp1
         public static string MarginHeight = "MarginHeight";
     }
 
+    //Contrat contenant les noms des balises des map
     static class MapElement
     {
         public static string Name = "Map";
@@ -488,6 +525,7 @@ namespace WindowsFormsApp1
         public static string Layers = "Layers";
     }
 
+    //Contrat contenant les noms des balises des layer
     static class LayerElement
     {
         public static string Name = "Layer";
@@ -497,6 +535,7 @@ namespace WindowsFormsApp1
         public static string Row = "R";
     }
 
+    //Classe contenant les différents layers composant une map
     class Map
     {
         public List<Layer> layers;
@@ -539,6 +578,7 @@ namespace WindowsFormsApp1
         }
     }
 
+    //Classe contenant un tableau d'index correspondant a des tiles
     class Layer
     {
         public int[,] tiles;
@@ -570,6 +610,8 @@ namespace WindowsFormsApp1
         }
     }
 
+    //Classe contenant l'ensemble des tiles composant une tilemap,l'image source, ainsi que les proprietes communes de ces tiles
+    //(longueur, largeur, nombre, etc)
     class TileMap
     {
         public int tileWidth = 32, tileHeight = 32;
@@ -626,6 +668,7 @@ namespace WindowsFormsApp1
         }
     }
 
+    //Classe contenant les positions et taille d'une tile précise (correspondant a des positions dans l'image source
     class Tile
     {
         static int count = 0;
