@@ -289,6 +289,7 @@
             this.Controls.Add(this.MapCanvas);
             this.Name = "Form1";
             this.Text = "TileMap Editor";
+            this.Load += new System.EventHandler(this.Form1_Load);
             this.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Form1_MouseUp);
             ((System.ComponentModel.ISupportInitialize)(this.TileCanvas)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.MapCanvas)).EndInit();

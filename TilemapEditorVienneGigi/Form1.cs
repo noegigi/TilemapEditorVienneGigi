@@ -29,11 +29,14 @@ namespace WindowsFormsApp1
 
         bool isErasing = false;
 
+        Graphics mapG, tileG;
+
         public Form1()
         {
             InitializeComponent();
         }
 
+        //Permet de selectionner une image dans les fichiers qui va servir de tilemap
         private void LoadTileMap_Click(object sender, EventArgs e)
         {
             OpenFileDialog fileDialog = new OpenFileDialog();
@@ -46,12 +49,10 @@ namespace WindowsFormsApp1
             }
         }
 
+        //Dessine les tiles
         private void DisplayTilemap()
         {
-            Graphics g = TileCanvas.CreateGraphics();
-            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-            g.Clear(Color.White);
+            tileG.Clear(Color.White);
             Image img = tileMap.imageSource;
             int cpt = 0;
             for (int x = 0; x < columnCount; x++)
@@ -60,7 +61,7 @@ namespace WindowsFormsApp1
                 {
                     if (cpt < tileMap.tileCount)
                     {
-                        g.DrawImage(img,
+                        tileG.DrawImage(img,
                             x * (tileMap.tileWidth + 1),
                             y * (tileMap.tileHeight + 1),
                             tileMap.GetTile(cpt).GetImagePosition(),
@@ -72,18 +73,16 @@ namespace WindowsFormsApp1
             }
         }
 
+        //Dessine la map
         private void DisplayMap()
         {
-            Graphics g = MapCanvas.CreateGraphics();
-            g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-            g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
-            g.Clear(Color.White);
+            mapG.Clear(Color.White);
             for(int x = 0; x <map.width; x++) {
                 for(int y = 0; y < map.height; y++)
                 {
                     if (map.GetTile(x, y)>-1)
                     {
-                        g.DrawImage(tileMap.imageSource,
+                        mapG.DrawImage(tileMap.imageSource,
                             x * tileMap.tileWidth,
                             y * tileMap.tileHeight,
                             tileMap.GetTile(map.GetTile(x, y)).GetImagePosition(),
@@ -94,6 +93,7 @@ namespace WindowsFormsApp1
             }
         }
 
+        //Met en premier plan la fenêtre pour entrer les propriétés de l'image (Tilemap)
         private void DisplayTileMapProperties()
         {
             PanelProperties.Visible = true;
@@ -115,7 +115,21 @@ namespace WindowsFormsApp1
 
         private void LoadMap_Click(object sender, EventArgs e)
         {
-            //XmlDocument doc = XMLHandler.LoadMapFromTML();
+            TileMap t = tileMap;
+            Map m = map;
+            if(XMLHandler.LoadMapFromTML(out tileMap,out map))
+            {
+                columnCount = tileMap.tileCountX;
+                rowCount = tileMap.tileCountY;
+                TileCanvas.Width = columnCount * (tileMap.tileWidth + 1) + 1;
+                TileCanvas.Height = rowCount * (tileMap.tileHeight + 1) + 1;
+                DisplayTilemap();
+            }
+            else
+            {
+                tileMap = t;
+                map = m;
+            }
         }
 
         private void TileCanvas_Click(object sender, EventArgs e)
@@ -145,14 +159,28 @@ namespace WindowsFormsApp1
                 {
                     map.AddTile(-1, x, y);
                     DisplayMap();
-                }
-                    
+                }   
             }
         }
 
-        private void MapCanvas_MouseDown(object sender, MouseEventArgs e)
+        private void MapCanvas_MouseDown(object sender, MouseEventArgs me)
         {
             isMouseDown = true;
+            if (tileMap != null && currentTile != -1)
+            {
+                int x = me.X / (tileMap.tileWidth);
+                int y = me.Y / (tileMap.tileHeight);
+                if (!isErasing)
+                {
+                    map.AddTile(currentTile, x, y);
+                    DisplayMap();
+                }
+                else
+                {
+                    map.AddTile(-1, x, y);
+                    DisplayMap();
+                }
+            }
         }
 
         private void Form1_MouseUp(object sender, MouseEventArgs e)
@@ -162,15 +190,15 @@ namespace WindowsFormsApp1
 
         private void MapCanvas_MouseMove(object sender, MouseEventArgs e)
         {
-            if (isMouseDown)
+            if (map!=null&&tileMap != null && currentTile != -1)
             {
-                if (tileMap != null && currentTile != -1)
+                int previousMapColumn = currentMapColumn;
+                int previousMapRow = currentMapRow;
+                currentMapColumn = e.X / (tileMap.tileWidth);
+                currentMapRow = e.Y / (tileMap.tileHeight);
+                if (previousMapColumn != currentMapColumn || previousMapRow != currentMapRow)
                 {
-                    int previousMapColumn = currentMapColumn;
-                    int previousMapRow = currentMapRow;
-                    currentMapColumn = e.X / (tileMap.tileWidth);
-                    currentMapRow = e.Y / (tileMap.tileHeight);
-                    if (previousMapColumn != currentMapColumn || previousMapRow != currentMapRow)
+                    if (isMouseDown)
                     {
                         if (!isErasing)
                         {
@@ -183,8 +211,30 @@ namespace WindowsFormsApp1
                             DisplayMap();
                         }
                     }
+                    else
+                    {
+                        DisplayMap();
+                        mapG.DrawImage(
+                            tileMap.imageSource,
+                            currentMapColumn*tileMap.tileWidth,
+                            currentMapRow*tileMap.tileHeight,
+                            tileMap.GetTile(currentTile).GetImagePosition(),
+                            GraphicsUnit.Pixel
+                            );
+                    }
                 }
             }
+        }
+
+        private void Form1_Load(object sender, EventArgs e)
+        {
+            mapG = MapCanvas.CreateGraphics();
+            tileG = TileCanvas.CreateGraphics();
+            mapG.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+            mapG.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
+
+            tileG.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+            tileG.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.NearestNeighbor;
         }
 
         private void Erase_Click(object sender, EventArgs e)
@@ -206,6 +256,7 @@ namespace WindowsFormsApp1
             isMouseDown = false;
         }
 
+        //Ferme la fenêtre des propriétés et les enregistres dans la tilemap
         private void ValidateTileMapProp_Click(object sender, EventArgs e)
         {
             PanelProperties.Visible = false;
@@ -221,6 +272,7 @@ namespace WindowsFormsApp1
             DisplayMap();
         }
 
+        //récupère la position x et y de la souris + dessine un contour du carré où se trouve la souris
         private void TileCanvas_MouseMove(object sender, MouseEventArgs e)
         {
             if (tileMap != null)
@@ -234,8 +286,7 @@ namespace WindowsFormsApp1
                     int x = currentColumn * (tileMap.tileWidth + 1);
                     int y = currentRow * (tileMap.tileHeight + 1);
                     DisplayTilemap();
-                    Graphics graphics = TileCanvas.CreateGraphics();
-                    graphics.DrawRectangle(new Pen(Color.Gray, 2), x, y, tileMap.tileWidth, tileMap.tileHeight);
+                    tileG.DrawRectangle(new Pen(Color.Gray, 2), x, y, tileMap.tileWidth, tileMap.tileHeight);
                 }
             }
         }
@@ -243,6 +294,7 @@ namespace WindowsFormsApp1
 
     static class XMLHandler
     {
+        //Enregistre une map en .tml
         public static void SaveMapAsTML(TileMap tileMap = null, Map map=null)
         {
             SaveFileDialog saveFile = new SaveFileDialog();
@@ -255,7 +307,7 @@ namespace WindowsFormsApp1
                 XmlTextWriter textWriter = new XmlTextWriter(saveFile.FileName,Encoding.UTF8);
                 textWriter.WriteStartDocument();
 
-                textWriter.WriteStartElement("SaveFile");
+                textWriter.WriteStartElement("root");
                     SaveTilemap(ref textWriter, tileMap);
 
                     SaveMap(ref textWriter, map);
@@ -300,33 +352,36 @@ namespace WindowsFormsApp1
 
         static void SaveLayer(ref XmlTextWriter w,Layer l)
         {
-            w.WriteStartElement(LayerElement.Tiles);
-            for(int x = 0; x < l.tiles.GetLength(0); x++)
-            {
-                w.WriteStartElement(LayerElement.Column);
-                for(int y = 0; y < l.tiles.GetLength(1); y++)
+            w.WriteStartElement(LayerElement.Name);
+                w.WriteStartElement(LayerElement.Tiles);
+                for(int x = 0; x < l.tiles.GetLength(0); x++)
                 {
-                    w.WriteElementString(LayerElement.Row, l.tiles[x,y].ToString());
+                    w.WriteStartElement(LayerElement.Column);
+                    for(int y = 0; y < l.tiles.GetLength(1); y++)
+                    {
+                        w.WriteElementString(LayerElement.Row, l.tiles[x,y].ToString());
+                    }
+                    w.WriteEndElement();
                 }
                 w.WriteEndElement();
-            }
-            w.WriteEndElement();
 
-            w.WriteStartElement(LayerElement.Collision);
-            for (int x = 0; x < l.collision.GetLength(0); x++)
-            {
-                w.WriteStartElement(LayerElement.Column);
-                for (int y = 0; y < l.collision.GetLength(1); y++)
+                w.WriteStartElement(LayerElement.Collision);
+                for (int x = 0; x < l.collision.GetLength(0); x++)
                 {
-                    w.WriteElementString(LayerElement.Row, l.collision[x, y].ToString());
+                    w.WriteStartElement(LayerElement.Column);
+                    for (int y = 0; y < l.collision.GetLength(1); y++)
+                    {
+                        w.WriteElementString(LayerElement.Row, l.collision[x, y].ToString());
+                    }
+                    w.WriteEndElement();
                 }
                 w.WriteEndElement();
-            }
             w.WriteEndElement();
         }
 
-        public static XmlDocument LoadMapFromTML()
+        public static bool LoadMapFromTML(out TileMap t,out Map m)
         {
+            //Charge une map en .tml
             OpenFileDialog fileDialog = new OpenFileDialog();
             fileDialog.InitialDirectory = "c:\\";
             fileDialog.Filter = "Map files (*.tml)|*.tml";
@@ -334,9 +389,84 @@ namespace WindowsFormsApp1
             {
                 XmlDocument xmlDoc = new XmlDocument();
                 xmlDoc.Load(fileDialog.FileName);
-                return xmlDoc;
+                XmlNode root = xmlDoc.SelectSingleNode("root");
+                XmlNode tileMapNode = root.SelectSingleNode(TileMapElement.Name);
+                t = LoadTilemap(tileMapNode);
+                XmlNode mapNode = root.SelectSingleNode(MapElement.Name);
+                m = LoadMap(mapNode);
+                return true;
             }
-            return null;
+            else
+            {
+                t = null;
+                m = null;
+                return false;
+            }
+        }
+
+        static TileMap LoadTilemap(XmlNode node)
+        {
+            string source = node.SelectSingleNode(TileMapElement.Source).InnerText;
+            TileMap t = new TileMap(source);
+            int tileWidth = int.Parse(node.SelectSingleNode(TileMapElement.TileWidth).InnerText);
+            int tileHeight = int.Parse(node.SelectSingleNode(TileMapElement.TileHeight).InnerText);
+            int marginWidth = int.Parse(node.SelectSingleNode(TileMapElement.MarginWidth).InnerText);
+            int marginHeight = int.Parse(node.SelectSingleNode(TileMapElement.MarginHeight).InnerText);
+            t.Cut(tileWidth, tileHeight, marginWidth, marginHeight);
+            return t;
+        }
+
+        static Map LoadMap(XmlNode node)
+        {
+            int width = int.Parse(node.SelectSingleNode(MapElement.Width).InnerText);
+            int height = int.Parse(node.SelectSingleNode(MapElement.Height).InnerText);
+            Map m = new Map(width,height);
+            XmlNodeList list = node.SelectNodes(LayerElement.Name);
+            int i = 0;
+            foreach(XmlNode n in list)
+            {
+                if (m.layers.Count < i)
+                    m.layers.Add(LoadLayer(n,width,height));
+                else
+                    m.layers[i] = LoadLayer(n,width,height);
+                i++;
+            }
+            return m;
+        }
+
+        static Layer LoadLayer(XmlNode node,int w,int h)
+        {
+            Layer l = new Layer(w,h);
+            XmlNode tiles = node.SelectSingleNode(LayerElement.Tiles);
+            XmlNodeList c = tiles.SelectNodes(LayerElement.Column);
+            int x = 0;
+            foreach(XmlNode n in c)
+            {
+                int y = 0;
+                XmlNodeList r = n.SelectNodes(LayerElement.Row);
+                foreach(XmlNode ny in n)
+                {
+                    l.AddTile(x, y, int.Parse(ny.InnerText));
+                    y++;
+                }
+                x++;
+            }
+
+            XmlNode collision = node.SelectSingleNode(LayerElement.Tiles);
+            c = collision.SelectNodes(LayerElement.Column);
+            x = 0;
+            foreach (XmlNode n in c)
+            {
+                int y = 0;
+                XmlNodeList r = n.SelectNodes(LayerElement.Row);
+                foreach (XmlNode ny in n)
+                {
+                    l.AddTile(x, y, int.Parse(ny.InnerText));
+                    y++;
+                }
+                x++;
+            }
+            return l;
         }
     }
 
@@ -381,11 +511,13 @@ namespace WindowsFormsApp1
             AddLayer();
         }
 
+        //Récupère la position d'une tile
         public int GetTile(int x,int y)
         {
             return layers[activeLayer].GetTile(x,y);
         }
 
+        //Ajoute l'index dans le tableau à une position donnée
         public void AddTile(int tileIndex,int x,int y)
         {
             layers[activeLayer].AddTile(x,y,tileIndex);
@@ -454,6 +586,7 @@ namespace WindowsFormsApp1
             imageSource = Image.FromFile(source);
         }
 
+        //Découpe l'image donnée en tiles selon la taille entrée par l'utilisateur
         public void Cut(int _tileWidth = 32,int _tileHeight = 32,int _marginWidth = 0,int _marginHeight = 0)
         {
             tileWidth = _tileWidth;
@@ -481,7 +614,10 @@ namespace WindowsFormsApp1
 
         public Tile GetTile(int index)
         {
-            return tiles[index];
+            if (index >= 0 && index < tiles.Length)
+                return tiles[index];
+            else
+                return tiles[0];
         }
 
         public int GetTileIndexFromXY(int x,int y)
